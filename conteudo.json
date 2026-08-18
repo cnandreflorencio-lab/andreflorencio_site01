@@ -1,0 +1,58 @@
+{
+  "texts": {
+    "hero.subtitle": "\n          Cantor católico, missionário da comunidade Canção Nova, anunciando o Evangelho por meio da música, da oração e da entrega a Deus.&nbsp;<div>&nbsp;Um ministério a serviço da Igreja, das famílias e das almas.\n        </div>",
+    "contact.availability": "Temos uma equipe pronta para atender você e auxiliar no que for preciso para que seu evento e consequentemente a evangelização aconteça!",
+    "contact.intro": "Para convites, apresentações, eventos, paróquias, shows e também sua mensagem.",
+    "agenda.intro": "Quero encontrar você no próximo evento!",
+    "sobre.p1": "\n            André Florencio é cantor católico, pregrador e escrito, desenvolve seu ministério levando música, espiritualidade\n            e evangelização para comunidades, eventos religiosos, encontros de oração, celebrações e shows",
+    "sobre.p2": "\n            Com um repertório marcado pela oração, louvor e entrega, seu propósito é conduzir as pessoas\n            a uma experiência profunda com Deus por meio da arte e da beleza da música dentro do carisma Canção Nova.",
+    "hero.eyebrow": "Música, fé e missão",
+    "hero.title": "André Florencio",
+    "hero.badge": "“Cantai ao Senhor um cântico novo.”",
+    "sobre.quote": "\n            “A música é caminho de oração, ponte entre o coração humano e o céu.”\n          ",
+    "stat1.value": "Ministério",
+    "stat1.label": "Música e evangelização",
+    "stat2.value": "Missão",
+    "stat2.label": "Paróquias e encontros",
+    "stat3.value": "Fé",
+    "stat3.label": "Canto como oração",
+    "fotos.intro": "Momentos de apresentações, encontros, celebrações e missão. Fotos armazenadas no Cloudinary.",
+    "clipes.intro": "Assista clipes, músicas e registros de apresentações. Vídeos adicionados a partir do YouTube.",
+    "social.intro": "Siga, compartilhe e acompanhe o trabalho de André Florencio nas redes."
+  },
+  "images": {
+    "hero": "hero.jpg",
+    "sobre": "https://res.cloudinary.com/uf9fikdp/image/upload/w_1200,q_auto,f_auto/v1786557093/andre_6.png",
+    "heroTitle": "https://res.cloudinary.com/uf9fikdp/image/upload/v1786541846/logo_inteiro_BR_s_f.png"
+  },
+  "heroTitleMode": "image",
+  "gallery": [
+    "https://res.cloudinary.com/uf9fikdp/image/upload/w_1000,q_auto,f_auto/v1786558446/IMG_2381.jpg",
+    "https://res.cloudinary.com/uf9fikdp/image/upload/w_1000,q_auto,f_auto/v1786559100/IMG_1071.jpg",
+    "https://res.cloudinary.com/uf9fikdp/image/upload/w_1000,q_auto,f_auto/v1786558482/IMG_2169.jpg",
+    "https://res.cloudinary.com/uf9fikdp/image/upload/w_1000,q_auto,f_auto/v1787071459/fotos-12.jpg"
+  ],
+  "videos": [
+    "_ieV_fDqMQs",
+    "0gS3Vz4o0ak",
+    "_OZtd6WV27A"
+  ],
+  "agendaCalendarId": "c_p61jtqahet0fvkdu6rg2fd9bbk@group.calendar.google.com",
+  "agendaApiKey": "AIzaSyB-jnTXX9BZqsDT9WTAuT355vYm_dGROgo",
+  "agendaUrl": "",
+  "contact": {
+    "whatsapp": "+55 12 99181-6121",
+    "email": "andre.florencio@cancaonova.com"
+  },
+  "social": {
+    "instagram": "http://instagram.com/andreflorenicocn",
+    "youtube": "http://youtube.com/@andreflorenciocn",
+    "facebook": "#",
+    "spotify": "https://open.spotify.com/intl-pt/artist/5bSowTcwiUhcQaJaDvn6po?si=mCW2Lr0_TqOYLhlig-J4tw&utm_source=copy-link&nd=1&utm_medium=organic&_branch_referrer=H4sIAAAAAAAAA8WOTWrDMBCFTyPvYrd2mkVBlJCQRQiE0pTSlRkrsiUia5TRqCabnL1yofQIhbd4vB%2F4DHOIz1UVA7LtbyWEUDrrL9VLIDwnxRKD9oWol31yrk3kpJkvolmLepc11%2BXvW%2BGYIyC2kbN56t5wOqnJvhv1CnvYfvlVQNHsohXNdtx81Ad6aE%2FX4%2BfBODss9kueRL1KPLYREymdVwrDbTET%2FTCAcx2oy39y5MKfc%2FBY3JUB77WTf4y9Bk6kJdIA3qriTrrXRNYPbUc4RU1yYwhH%2FQ3kzWbLeAEAAA%3D%3D&product=open&%24full_url=https%3A%2F%2Fopen.spotify.com%2Fartist%2F5bSowTcwiUhcQaJaDvn6po%3Fsi%3DmCW2Lr0_TqOYLhlig-J4tw%26utm_source%3Dcopy-link&~channel=copy-link&feature=organic&_branch_match_id=1618303055094145363",
+    "whatsapp": "#"
+  },
+  "admin": {
+    "user": "admin",
+    "pass": "andre2026"
+  }
+}
