@@ -220,9 +220,9 @@
     .video iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; }
     .video-actions { position: absolute; top: 0.7rem; right: 0.7rem; z-index: 3; }
 
-    .photo-actions button, .video-actions button {
+    .photo-actions button, .video-actions button, .product-actions button {
       border: 0; background: rgba(10,10,10,0.85); color: #fff;
-      padding: 0.45rem 0.7rem; border-radius: 999px; cursor: pointer; font-size: 0.8rem; font-weight: 700;
+      padding: 0.45rem 0.7rem; border-radius: 999px; cursor: pointer; font-size: 0.75rem; font-weight: 700;
     }
 
     /* ===== PRODUTOS ===== */
@@ -260,6 +260,11 @@
       font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
       text-transform: uppercase;
       box-shadow: 0 6px 16px rgba(196,150,44,0.4);
+      z-index: 2;
+    }
+    .product-actions {
+      position: absolute; top: 0.7rem; right: 0.7rem; z-index: 4;
+      display: flex; gap: 0.4rem;
     }
     .product-body {
       padding: 1.2rem 1.2rem 1.4rem;
@@ -280,10 +285,6 @@
       color: var(--primary);
       margin: 0;
     }
-    .product-price small {
-      font-size: 0.8rem; color: var(--muted);
-      font-weight: 500; font-family: "Manrope", sans-serif;
-    }
     .product-buy {
       display: inline-flex; align-items: center; justify-content: center;
       gap: 0.4rem; margin-top: auto;
@@ -293,15 +294,6 @@
       transition: background 0.2s ease, transform 0.2s ease;
     }
     .product-buy:hover { background: var(--wine); transform: translateY(-1px); }
-    .product-actions {
-      position: absolute; top: 0.7rem; right: 0.7rem; z-index: 4;
-      display: flex; gap: 0.4rem;
-    }
-    .product-actions button {
-      border: 0; background: rgba(10,10,10,0.85); color: #fff;
-      padding: 0.45rem 0.7rem; border-radius: 999px; cursor: pointer;
-      font-size: 0.75rem; font-weight: 700;
-    }
 
     .social-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
     .social-card {
@@ -586,7 +578,7 @@
       </div>
     </section>
 
-    <!-- NOVA SEÇÃO: PRODUTOS DE EVANGELIZAÇÃO -->
+    <!-- PRODUTOS DE EVANGELIZAÇÃO -->
     <section id="produtos" class="section">
       <div class="container">
         <div class="section-head reveal">
@@ -806,6 +798,7 @@
     let editMode = false;
     let currentUpload = { type: "", index: null };
     let editingCollabIndex = null;
+    let pendingProduct = null; /* produto aguardando upload de imagem */
 
     const draftRaw = localStorage.getItem(STORAGE_KEY);
     let state = null;
@@ -1118,11 +1111,11 @@
       if (opt === null) return;
       if (opt.trim() === "1") { state.heroTitleMode = "text"; renderHeroTitle(); save(); return; }
       if (opt.trim() === "2") {
-        const url = prompt("Cole a URL da imagem ou deixe em branco para enviar do computador (Cloudinary):");
+        const url = prompt("Cole a URL da imagem ou deixe em branco para enviar do computador:");
         if (url === null) return;
         if (url.trim()) { state.images.heroTitle = url.trim(); state.heroTitleMode = "image"; renderHeroTitle(); save(); }
         else {
-          if (!cloudinaryConfigured()) { alert("Configure o Cloudinary no início do código."); return; }
+          if (!cloudinaryConfigured()) { alert("Configure o Cloudinary."); return; }
           currentUpload = { type: "heroTitle", index: null };
           els.fileInput.click();
         }
@@ -1176,8 +1169,23 @@
       try {
         setStatus("Enviando imagem para o Cloudinary...");
         const r = await uploadToCloudinary(file);
-        applyImage(currentUpload.type, currentUpload.index, r.secure_url);
-        save();
+        const imgUrl = optimizeCloudinary(r.secure_url, 1000);
+
+        if (currentUpload.type === "productNew" && pendingProduct) {
+          pendingProduct.image = imgUrl;
+          state.products.push(pendingProduct);
+          pendingProduct = null;
+          renderProducts(); save();
+          alert("✅ Produto adicionado com sucesso!");
+        } else if (currentUpload.type === "productEdit") {
+          state.products[currentUpload.index].image = imgUrl;
+          renderProducts(); save();
+          alert("✅ Imagem do produto atualizada!");
+        } else {
+          applyImage(currentUpload.type, currentUpload.index, r.secure_url);
+          save();
+        }
+
         setStatus("Imagem enviada com sucesso!");
         setTimeout(() => setStatus(""), 2500);
       } catch (err) {
@@ -1252,7 +1260,7 @@
       });
     }
 
-    /* ==================== PRODUTOS: extração automática de metadados ==================== */
+    /* ==================== PRODUTOS ==================== */
     async function fetchProductMeta(url) {
       try {
         const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
@@ -1270,80 +1278,22 @@
 
         const title = getMeta("og:title") || getMeta("twitter:title") || doc.querySelector("title")?.textContent || "";
         const image = getMeta("og:image") || getMeta("twitter:image") || "";
-        
-        /* Tenta diversos formatos de preço em meta tags */
-        let price = getMeta("og:price:amount") || getMeta("product:price:amount") || 
-                    getMeta("product:sale_price:amount") || "";
-        
-        let currency = getMeta("og:price:currency") || getMeta("product:price:currency") || "BRL";
+        let price = getMeta("og:price:amount") || getMeta("product:price:amount") || getMeta("product:sale_price:amount") || "";
 
-        /* Se não encontrou nas meta tags, tenta encontrar no HTML */
         if (!price) {
           const priceEl = doc.querySelector('[class*="price"], [itemprop="price"], .a-price-whole, .price');
           if (priceEl) price = priceEl.textContent.replace(/[^\d,\.]/g, "").trim();
         }
-
-        /* Se ainda não encontrou preço, tenta extrair com regex */
         if (!price) {
           const priceMatch = html.match(/R\$\s*([\d.,]+)/i) || html.match(/(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/);
           if (priceMatch) price = priceMatch[1];
         }
 
-        return { title: title.trim(), image: image.trim(), price: price.trim(), currency };
+        return { title: title.trim(), image: image.trim(), price: price.trim() };
       } catch (e) {
         console.warn("Não foi possível extrair metadados:", e);
-        return { title: "", image: "", price: "", currency: "BRL" };
+        return { title: "", image: "", price: "" };
       }
-    }
-
-    async function addProduct() {
-      if (!hasPermission("editProducts")) { alert("Sem permissão."); return; }
-      const url = prompt("Cole o link do produto (Amazon, Shopee, Mercado Livre, site próprio, etc.):");
-      if (!url || !url.trim()) return;
-
-      setStatus("Buscando informações do produto...");
-      const meta = await fetchProductMeta(url.trim());
-      setStatus("");
-
-      /* Se não conseguiu extrair, pede os dados manualmente */
-      let title = meta.title;
-      let image = meta.image;
-      let price = meta.price;
-
-      if (!title) {
-        title = prompt("Não foi possível extrair o nome automaticamente.\nDigite o nome do produto:");
-        if (!title) return;
-      }
-
-      if (!price) {
-        price = prompt("Não foi possível extrair o preço.\nDigite o preço (ex: 49,90):", "");
-      }
-
-      if (!image) {
-        image = prompt("Cole a URL da imagem do produto\n(ou deixe em branco para usar imagem padrão):", "");
-      }
-
-      /* Formata preço */
-      let formattedPrice = "";
-      if (price) {
-        const num = String(price).replace(/\s/g, "").replace("R$", "").replace(".", "").replace(",", ".");
-        if (!isNaN(parseFloat(num))) {
-          formattedPrice = parseFloat(num).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-        } else {
-          formattedPrice = "R$ " + price;
-        }
-      }
-
-      state.products.push({
-        url: url.trim(),
-        title: title,
-        image: image || "",
-        price: price || "",
-        priceFormatted: formattedPrice || "Ver preço"
-      });
-      renderProducts();
-      save();
-      alert("✅ Produto adicionado com sucesso!");
     }
 
     function formatPrice(price) {
@@ -1355,24 +1305,123 @@
       return "R$ " + price;
     }
 
+    /* Escolhe a imagem do produto: automática, URL, upload ou sem imagem */
+    function chooseProductImage(metaImage, onDone, uploadType, uploadIndex) {
+      const hasAuto = !!metaImage;
+      const msg = "IMAGEM DO PRODUTO:\n\n" +
+        (hasAuto ? "1 → Usar imagem encontrada automaticamente\n" : "") +
+        "2 → Colar URL de uma imagem\n" +
+        "3 → Enviar imagem do meu computador\n" +
+        "4 → Produto sem imagem";
+      const opt = prompt(msg, hasAuto ? "1" : "2");
+      if (opt === null) return false;
+
+      const o = opt.trim();
+      if (o === "1" && hasAuto) { onDone(metaImage); return true; }
+      if (o === "2") {
+        const u = prompt("Cole a URL da imagem do produto:");
+        if (u === null) return false;
+        onDone(u.trim());
+        return true;
+      }
+      if (o === "3") {
+        if (!cloudinaryConfigured()) { alert("Para enviar do computador, configure o Cloudinary no início do código."); return false; }
+        currentUpload = { type: uploadType, index: uploadIndex ?? null };
+        els.fileInput.click();
+        return true; /* conclusão acontece no evento do fileInput */
+      }
+      onDone("");
+      return true;
+    }
+
+    async function addProduct() {
+      if (!hasPermission("editProducts")) { alert("Sem permissão."); return; }
+
+      const url = prompt("Cole o LINK DA LOJA com o produto:\n(ex.: Amazon, Shopee, site próprio...)");
+      if (url === null) return;
+
+      let meta = { title: "", image: "", price: "" };
+      if (url.trim()) {
+        setStatus("Buscando informações do produto...");
+        meta = await fetchProductMeta(url.trim());
+        setStatus("");
+      }
+
+      const title = prompt("Nome do produto:", meta.title || "");
+      if (title === null) return;
+
+      const price = prompt("Preço (ex.: 49,90):", meta.price || "");
+      if (price === null) return;
+
+      const finish = (image) => {
+        state.products.push({
+          url: url.trim() || "#",
+          title: title.trim() || "Produto",
+          image: image || "",
+          price: (price || "").trim(),
+          priceFormatted: formatPrice(price)
+        });
+        renderProducts(); save();
+        alert("✅ Produto adicionado com sucesso!");
+      };
+
+      const ok = chooseProductImage(meta.image, finish, "productNew", null);
+      if (!ok) return;
+    }
+
+    async function editProduct(i) {
+      if (!hasPermission("editProducts")) { alert("Sem permissão."); return; }
+      const p = state.products[i];
+
+      const url = prompt("Link da loja com o produto:", p.url || "");
+      if (url === null) return;
+
+      const title = prompt("Nome do produto:", p.title || "");
+      if (title === null) return;
+
+      const price = prompt("Preço (ex.: 49,90):", p.price || "");
+      if (price === null) return;
+
+      p.url = url.trim() || p.url;
+      p.title = (title.trim()) || p.title;
+      p.price = (price || "").trim();
+      p.priceFormatted = formatPrice(price);
+
+      const ok = chooseProductImage(p.image, (image) => {
+        p.image = image;
+        renderProducts(); save();
+        alert("✅ Produto atualizado!");
+      }, "productEdit", i);
+
+      if (!ok) { renderProducts(); save(); }
+    }
+
+    function removeProduct(i) {
+      if (!confirm("Remover este produto?")) return;
+      state.products.splice(i, 1);
+      renderProducts();
+      save();
+    }
+
     function renderProducts() {
       els.products.innerHTML = "";
       if (!state.products.length) {
-        els.products.innerHTML = `<div class="empty">Nenhum produto cadastrado ainda.<br><small>Clique em "Adicionar produto" e cole o link de venda.</small></div>`;
+        els.products.innerHTML = `<div class="empty">Nenhum produto cadastrado ainda.<br><small>Clique em "Adicionar produto" e cole o link da loja.</small></div>`;
         return;
       }
       state.products.forEach((p, i) => {
         const d = document.createElement("article");
         d.className = "product";
-        const imgHtml = p.image 
+        const imgHtml = p.image
           ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" loading="lazy" onerror="this.style.display='none'" />`
           : `<div style="display:grid; place-items:center; height:100%; font-family:'Fraunces',serif; color:var(--primary); font-size:2.5rem;">✠</div>`;
-        
+
         d.innerHTML = `
           <div class="product-img">
             ${imgHtml}
             <span class="product-badge">Produto</span>
             <div class="product-actions edit-control">
+              <button data-action="editProduct" data-index="${i}" data-perm="editProducts">Editar</button>
               <button data-action="removeProduct" data-index="${i}" data-perm="editProducts">Remover</button>
             </div>
           </div>
@@ -1385,13 +1434,6 @@
           </div>`;
         els.products.appendChild(d);
       });
-    }
-
-    function removeProduct(i) {
-      if (!confirm("Remover este produto?")) return;
-      state.products.splice(i, 1);
-      renderProducts();
-      save();
     }
 
     /* ==================== AGENDA ==================== */
@@ -1533,6 +1575,7 @@
         case "addVideo": addVideo(); break;
         case "removeVideo": if (confirm("Remover este vídeo?")) { state.videos.splice(i, 1); renderVideos(); save(); } break;
         case "addProduct": addProduct(); break;
+        case "editProduct": editProduct(i); break;
         case "removeProduct": removeProduct(i); break;
         case "editAgenda": editAgenda(); break;
         case "editContact": editContact(); break;
